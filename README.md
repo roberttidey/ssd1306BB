@@ -3,7 +3,7 @@
 - This library is a simple driver for SSD1306 based OLED screens.
 - It is designed for small footprint targets like ATTiny85.
 - It uses BitBang I2C to allow freedom of choice on GPIO used and avoid conflict between dedicated pin usage and hardware I2C
-- https://github.com/bitbank2/BitBang_I2C
+- https://github.com/roberttidey/I2CTinyBB
 
 - One of 3 fonts may be selected by setting the FONT_TYPE in the font header file
 - Default FONT 1 gives a 12x16 character doubled up from a 6x8 to minimise font definition table

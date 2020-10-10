@@ -44,19 +44,20 @@ SSD1306Device::SSD1306Device(void){}
 
 uint8_t  i2cBuff[33];
 
-void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint32_t iClock)
+void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount)
 {
 	uint8_t i;
-	bbi2c.bWire = 0;
-	bbi2c.iSDA = sda;
-	bbi2c.iSCL = scl;
+//	bbi2c.bWire = 0;
+//	bbi2c.iSDA = sda;
+//	bbi2c.iSCL = scl;
 	oledAddr = saddr;
-	I2CInit(&bbi2c, iClock);
+//	I2CInit(&bbi2c, iClock);
+	I2CInit(sda, scl, delayCount);
 	i2cBuff[0] = SSD1306_COMMAND;
 	for (i = 0; i < sizeof(ssd1306_init_sequence); i++) {
 		i2cBuff[i+1] = pgm_read_byte(&ssd1306_init_sequence[i]);
 	}
-	I2CWrite(&bbi2c, oledAddr, i2cBuff, sizeof(ssd1306_init_sequence) + 1);
+	I2CWrite(oledAddr, i2cBuff, sizeof(ssd1306_init_sequence) + 1);
 	ssd1306_fillscreen(0);
 }
 
@@ -68,7 +69,7 @@ void SSD1306Device::ssd1306_fillscreen(uint8_t fill) {
 		i2cBuff[i] = fill;
 	}
 	for (i = 0; i < 32; i++) {
-		I2CWrite(&bbi2c, oledAddr, i2cBuff, 33);
+		I2CWrite(oledAddr, i2cBuff, 33);
 	}
 }
 
@@ -76,7 +77,7 @@ void SSD1306Device::ssd1306_flipscreen(uint8_t flip) {
 	i2cBuff[0] = SSD1306_COMMAND; 
 	i2cBuff[1] = 0xA0; 
 	i2cBuff[2] = flip ? 0xC0 : 0xC8; 
-	I2CWrite(&bbi2c, oledAddr, i2cBuff, 3);
+	I2CWrite(oledAddr, i2cBuff, 3);
 }
 
 void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y)
@@ -87,7 +88,7 @@ void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y)
 	i2cBuff[1] = 0xb0 | (y & 0x07);
 	i2cBuff[2] = 0x10 | ((x & 0xf0) >> 4); 
 	i2cBuff[3] = x & 0x0f; 
-	I2CWrite(&bbi2c, oledAddr, i2cBuff, 4);
+	I2CWrite(oledAddr, i2cBuff, 4);
 }
 
 
@@ -111,7 +112,7 @@ void SSD1306Device::ssd1306_charInt(char ch, uint8_t mode, uint16_t offset) {
 			i2cBuff[j] = f; j++;
 		}
 	}
-	I2CWrite(&bbi2c, oledAddr, i2cBuff, j);
+	I2CWrite(oledAddr, i2cBuff, j);
 #endif
 }
 
@@ -162,7 +163,7 @@ void SSD1306Device::ssd1306_draw_bmp(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t
 			i2cBuff[i] = pgm_read_byte(&bitmap[j++]);
 			//write in blocks of 32 bytes until end
 			if((i++ == 32) || (x == (x0 -1))) {
-				I2CWrite(&bbi2c, oledAddr, i2cBuff, i);
+				I2CWrite(oledAddr, i2cBuff, i);
 				i = 1;
 			}
 		}

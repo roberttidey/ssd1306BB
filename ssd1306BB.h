@@ -13,7 +13,7 @@
 */
 #include <stdint.h>
 #include <Arduino.h>
-#include <BitBang_I2C.h>
+#include <I2CTinyBB.h>
 
 #ifndef SSD1306BB_H
 #define SSD1306BB_H
@@ -27,7 +27,7 @@ class SSD1306Device
 {
     public:
 		SSD1306Device(void);
-		void ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint32_t iClock);
+		void ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount);
 		void ssd1306_setpos(uint8_t x, uint8_t y);
 		void ssd1306_fillscreen(uint8_t fill);
 		void ssd1306_flipscreen(uint8_t flip);
@@ -37,7 +37,7 @@ class SSD1306Device
 		void ssd1306_draw_bmp(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8_t bitmap[]);
 
 	private:
-		BBI2C bbi2c;
+//		BBI2C bbi2c;
 		uint8_t oledAddr;
 		uint8_t xpos;
 		uint8_t ypos;

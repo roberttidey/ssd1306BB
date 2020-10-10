@@ -4,10 +4,10 @@
 #include <Arduino.h>
 
 #include <ssd1306BB.h>
-#define SSD1306_SCL		0xB1	// SCL
-#define SSD1306_SDA		0xB0	// SDA
+#define SSD1306_SCL		1		// SCL
+#define SSD1306_SDA		0		// SDA
 #define SSD1306_SA		0X3C	// Slave address
-#define SSDI2C_CLOCK	800000	// i2c clock
+#define SSDI2C_DELAY	4		// sets i2c speed
 
 // // default PIN configuration is as below
 // // VCC ---- vcc
@@ -32,7 +32,7 @@ void displayInit() {
 
 void setup() {
 	delay(400);
-	SSD1306.ssd1306_init(SSD1306_SDA, SSD1306_SCL, SSD1306_SA, SSDI2C_CLOCK);
+	SSD1306.ssd1306_init(SSD1306_SDA, SSD1306_SCL, SSD1306_SA, SSDI2C_DELAY);
 	displayInit();
 }
 
