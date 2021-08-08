@@ -42,10 +42,9 @@ const uint8_t ssd1306_init_sequence[] PROGMEM  = {	// Initialization Sequence
 
 SSD1306Device::SSD1306Device(void){}
 
-uint8_t  i2cBuff[33];
+uint8_t  i2cBuff[40];
 
-void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount)
-{
+void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount) {
 	uint8_t i;
 //	bbi2c.bWire = 0;
 //	bbi2c.iSDA = sda;
@@ -59,6 +58,12 @@ void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_
 	}
 	I2CWrite(oledAddr, i2cBuff, sizeof(ssd1306_init_sequence) + 1);
 	ssd1306_fillscreen(0);
+}
+
+void SSD1306Device::ssd1306_sleep(uint8_t s) {
+	i2cBuff[0] = SSD1306_COMMAND; 
+	i2cBuff[1] = s ? 0xAE : 0xAF;
+	I2CWrite(oledAddr, i2cBuff, 2);
 }
 
 void SSD1306Device::ssd1306_fillscreen(uint8_t fill) {
@@ -80,8 +85,7 @@ void SSD1306Device::ssd1306_flipscreen(uint8_t flip) {
 	I2CWrite(oledAddr, i2cBuff, 3);
 }
 
-void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y)
-{
+void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y) {
 	xpos = x;
 	ypos = y;
 	i2cBuff[0] = SSD1306_COMMAND; 
@@ -91,9 +95,12 @@ void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y)
 	I2CWrite(oledAddr, i2cBuff, 4);
 }
 
+void SSD1306Device::ssd1306_setscale(uint8_t s) {
+	scale = s;
+}
 
-void SSD1306Device::ssd1306_charInt(char ch, uint8_t mode, uint16_t offset) {
-#if FONT < 3
+void SSD1306Device::ssd1306_charInt(char ch, uint8_t shift, uint16_t offset) {
+#if FONT < 2
 	uint8_t i,j;
 	unsigned char f;	
 	uint8_t c = ch - 32;
@@ -101,15 +108,19 @@ void SSD1306Device::ssd1306_charInt(char ch, uint8_t mode, uint16_t offset) {
 	j = 1;
 	for (i= 0; i < FONT_WIDTH; i++) {
 		f = (unsigned char)pgm_read_byte(&ssd1306xled_font[c * FONT_WIDTH + i + offset]);
-		if(mode == 0) {
-			i2cBuff[j] = f; j++;
-		} else {
-			if(mode == 1)
-				f = (unsigned char)pgm_read_byte(&nibbleDouble[f & 0xf]);
-			else
-				f = (unsigned char)pgm_read_byte(&nibbleDouble[f>>4]);
-			i2cBuff[j] = f; j++;;
-			i2cBuff[j] = f; j++;
+		switch(scale) {
+			case 0: i2cBuff[j] = f; j++;
+					break;
+			case 1: f = (unsigned char)pgm_read_byte(&nibbleDouble[(f >> shift) & 0x0f]);
+					i2cBuff[j] = f; j++;
+					i2cBuff[j] = f; j++;
+					break;
+			case 2: f = (unsigned char)pgm_read_byte(&diBitQuad[(f >> shift) & 0x03]);
+					i2cBuff[j] = f; j++;
+					i2cBuff[j] = f; j++;
+					i2cBuff[j] = f; j++;
+					i2cBuff[j] = f; j++;
+					break;
 		}
 	}
 	I2CWrite(oledAddr, i2cBuff, j);
@@ -118,22 +129,62 @@ void SSD1306Device::ssd1306_charInt(char ch, uint8_t mode, uint16_t offset) {
 
 void SSD1306Device::ssd1306_char(char ch) {
 	#if FONT == 0
-		ssd1306_charInt(ch, 0, 0);
+		switch(scale) {
+			case 0: ssd1306_charInt(ch, 0, 0);
+					break;
+			case 1: ssd1306_charInt(ch, 0, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, 0);
+					ssd1306_setpos(xpos+12, ypos-1);
+					break;
+			case 2: ssd1306_charInt(ch, 0, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 2, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 6, 0);
+					ssd1306_setpos(xpos+24, ypos-3);
+					break;
+		}
 	#elif FONT == 1
-		ssd1306_charInt(ch, 1, 0);
-		ssd1306_setpos(xpos, ypos+1);
-		ssd1306_charInt(ch, 2, 0);
-		ssd1306_setpos(xpos+12, ypos-1);
-	#elif FONT == 2
-		ssd1306_charInt(ch, 0, 0);
-		ssd1306_setpos(xpos, ypos+1);
-		ssd1306_charInt(ch, 0, FONT_TABLEOFFSET);
-		ssd1306_setpos(xpos+8, ypos-1);
+		switch(scale) {
+			case 0: ssd1306_charInt(ch, 0, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 0, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos+8, ypos-1);
+					break;
+			case 1: ssd1306_charInt(ch, 0, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 0, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos+16, ypos-3);					break;
+			case 2: ssd1306_charInt(ch, 0, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 2, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 6, 0);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 0, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 2, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 4, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos, ypos+1);
+					ssd1306_charInt(ch, 6, FONT_TABLEOFFSET);
+					ssd1306_setpos(xpos+32, ypos-7);
+					break;
+		}
 	#endif
 }
 
 void SSD1306Device::ssd1306_string(char *s) {
-#if FONT < 3
+#if FONT < 2
 	while (*s) {
 		ssd1306_char(*s++);
 	}
@@ -141,7 +192,7 @@ void SSD1306Device::ssd1306_string(char *s) {
 }
 
 void SSD1306Device::ssd1306_string(uint8_t x, uint8_t y, char *s) {
-#if FONT < 3
+#if FONT < 2
 	ssd1306_setpos(x, y);
 	ssd1306_string(s);
 #endif

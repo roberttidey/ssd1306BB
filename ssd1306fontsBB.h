@@ -8,19 +8,21 @@
  *
  */
 #include <avr/pgmspace.h>
-
 //FONT 0 6x8
-//FONT 1 12x16 (Doubled up 6x8)
-//FONT 2 8x16
-#define FONT 1
+//FONT 1 8 x 16
+// These can be scaled by 0 (x1),1 (x2), 2 (x4)
+#define FONT 0
 
 const uint8_t nibbleDouble [] PROGMEM = {
 	0x00,0x03,0x0c,0x0f,0x30,0x33,0x3c,0x3f,
 	0xc0,0xc3,0xcc,0xcf,0xf0,0xf3,0xfc,0xff,
 };
 
+const uint8_t diBitQuad [] PROGMEM = {
+	0x00,0x0f,0xf0,0xff,
+};
 // ----------------------------------------------------------------------------
-#if FONT == 2
+#if FONT == 1
 	#define FONT_WIDTH 8
 	// 8 * 95 = 760
 	#define FONT_TABLEOFFSET 760
@@ -220,7 +222,7 @@ const uint8_t nibbleDouble [] PROGMEM = {
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // ~ 94
 	};
 	// ----------------------------------------------------------------------------
-#elif FONT < 2
+#elif FONT == 0
 	#define FONT_WIDTH 6
 
 	// ----------------------------------------------------------------------------
