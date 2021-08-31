@@ -1,10 +1,11 @@
 # SSD1306BB
 
 - This library is a simple driver for SSD1306 based OLED screens.
-- It is designed for small footprint targets like ATTiny85.
-- It uses BitBang I2C to allow freedom of choice on GPIO used and avoid conflict between dedicated pin usage and hardware I2C
+- It was designed for small footprint targets like ATTiny85.
+- For ATtiny85 it uses BitBang I2C to allow freedom of choice on GPIO used and avoid conflict between dedicated pin usage and hardware I2C
 - https://github.com/roberttidey/I2CTinyBB
-
+- Will detect if other CPUs are used and then use the Wire library for I2C
+- sda,scl for non ATtiny should be set to I2C compatible Wire pins in init call
 - One of 2 fonts may be selected by setting the FONT_TYPE in the font header file
 - FONT 0 is small 6x8 characters
 - FONT 1 is 8x16 narrow characters to fit more horizontally

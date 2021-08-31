@@ -8,12 +8,9 @@
  * 
  * Based on work by Neven Boyanov, Tejashwi Kalp Taru
  *
- * Uses BitBang I2C library to allow free pin definition for I2C
- * https://github.com/bitbank2/BitBang_I2C
 */
 #include <stdint.h>
 #include <Arduino.h>
-#include <I2CTinyBB.h>
 
 #ifndef SSD1306BB_H
 #define SSD1306BB_H
@@ -27,7 +24,7 @@ class SSD1306Device
 {
     public:
 		SSD1306Device(void);
-		void ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount);
+		void ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delay);
 		void ssd1306_sleep(uint8_t s);
 		void ssd1306_setpos(uint8_t x, uint8_t y);
 		void ssd1306_setscale(uint8_t s);
@@ -42,8 +39,9 @@ class SSD1306Device
 		uint8_t oledAddr;
 		uint8_t xpos;
 		uint8_t ypos;
-		uint8_t scale = 2;
+		uint8_t scale = 1;
 		void ssd1306_charInt(char ch, uint8_t mode, uint16_t offset);
+		void i2cw(uint8_t iaddr, uint8_t *data, uint8_t iLen);
 };
 
 

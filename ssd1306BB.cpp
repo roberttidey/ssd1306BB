@@ -11,11 +11,14 @@
  */
 
 // ----------------------------------------------------------------------------
-
-#include <stdlib.h>
-#include <avr/io.h>
-
-#include <avr/pgmspace.h>
+#ifdef __AVR_ATtiny85__
+	#include <stdlib.h>
+	#include <avr/io.h>
+	#include <avr/pgmspace.h>
+	#include <I2CTinyBB.h>
+#else
+	#include <Wire.h>
+#endif
 
 #include "ssd1306BB.h"
 #include "ssd1306fontsBB.h"
@@ -44,26 +47,41 @@ SSD1306Device::SSD1306Device(void){}
 
 uint8_t  i2cBuff[40];
 
-void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delayCount) {
+//i2c write using either Wire of I2CBB library
+void SSD1306Device::i2cw(uint8_t iaddr, uint8_t *data, uint8_t iLen) {
+	#ifdef __AVR_ATtiny85__
+		I2CWrite(iaddr, data, iLen);
+	#else
+		uint8_t i;
+		Wire.beginTransmission(iaddr);
+		for(i = 0; i < iLen; i++) {
+			Wire.write(i2cBuff[i]);
+		}
+		Wire.endTransmission();
+	#endif
+}
+
+void SSD1306Device::ssd1306_init(uint8_t sda, uint8_t scl, uint8_t saddr, uint8_t delay) {
 	uint8_t i;
-//	bbi2c.bWire = 0;
-//	bbi2c.iSDA = sda;
-//	bbi2c.iSCL = scl;
 	oledAddr = saddr;
-//	I2CInit(&bbi2c, iClock);
-	I2CInit(sda, scl, delayCount);
+	#ifdef __AVR_ATtiny85__
+		I2CInit(sda, scl, delay);
+	#else
+		Wire.begin();
+		Wire.setClock(delay * 100000);
+	#endif
 	i2cBuff[0] = SSD1306_COMMAND;
 	for (i = 0; i < sizeof(ssd1306_init_sequence); i++) {
 		i2cBuff[i+1] = pgm_read_byte(&ssd1306_init_sequence[i]);
 	}
-	I2CWrite(oledAddr, i2cBuff, sizeof(ssd1306_init_sequence) + 1);
+	i2cw(oledAddr, i2cBuff, sizeof(ssd1306_init_sequence) + 1);
 	ssd1306_fillscreen(0);
 }
 
 void SSD1306Device::ssd1306_sleep(uint8_t s) {
 	i2cBuff[0] = SSD1306_COMMAND; 
 	i2cBuff[1] = s ? 0xAE : 0xAF;
-	I2CWrite(oledAddr, i2cBuff, 2);
+	i2cw(oledAddr, i2cBuff, 2);
 }
 
 void SSD1306Device::ssd1306_fillscreen(uint8_t fill) {
@@ -74,7 +92,7 @@ void SSD1306Device::ssd1306_fillscreen(uint8_t fill) {
 		i2cBuff[i] = fill;
 	}
 	for (i = 0; i < 32; i++) {
-		I2CWrite(oledAddr, i2cBuff, 33);
+		i2cw(oledAddr, i2cBuff, 33);
 	}
 }
 
@@ -82,7 +100,7 @@ void SSD1306Device::ssd1306_flipscreen(uint8_t flip) {
 	i2cBuff[0] = SSD1306_COMMAND; 
 	i2cBuff[1] = 0xA0; 
 	i2cBuff[2] = flip ? 0xC0 : 0xC8; 
-	I2CWrite(oledAddr, i2cBuff, 3);
+	i2cw(oledAddr, i2cBuff, 3);
 }
 
 void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y) {
@@ -92,7 +110,7 @@ void SSD1306Device::ssd1306_setpos(uint8_t x, uint8_t y) {
 	i2cBuff[1] = 0xb0 | (y & 0x07);
 	i2cBuff[2] = 0x10 | ((x & 0xf0) >> 4); 
 	i2cBuff[3] = x & 0x0f; 
-	I2CWrite(oledAddr, i2cBuff, 4);
+	i2cw(oledAddr, i2cBuff, 4);
 }
 
 void SSD1306Device::ssd1306_setscale(uint8_t s) {
@@ -123,7 +141,7 @@ void SSD1306Device::ssd1306_charInt(char ch, uint8_t shift, uint16_t offset) {
 					break;
 		}
 	}
-	I2CWrite(oledAddr, i2cBuff, j);
+	i2cw(oledAddr, i2cBuff, j);
 #endif
 }
 
@@ -198,7 +216,6 @@ void SSD1306Device::ssd1306_string(uint8_t x, uint8_t y, char *s) {
 #endif
 }
 
-
 void SSD1306Device::ssd1306_draw_bmp(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8_t bitmap[]){
 	uint16_t j = 0;
 	uint8_t y, x;
@@ -214,13 +231,12 @@ void SSD1306Device::ssd1306_draw_bmp(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t
 			i2cBuff[i] = pgm_read_byte(&bitmap[j++]);
 			//write in blocks of 32 bytes until end
 			if((i++ == 32) || (x == (x0 -1))) {
-				I2CWrite(oledAddr, i2cBuff, i);
+				i2cw(oledAddr, i2cBuff, i);
 				i = 1;
 			}
 		}
 	}
 }
-
 
 SSD1306Device SSD1306;
 

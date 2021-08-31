@@ -7,7 +7,7 @@
  * Source code available at: https://bitbucket.org/tinusaur/ssd1306xled
  *
  */
-#include <avr/pgmspace.h>
+//#include <avr/pgmspace.h>
 //FONT 0 6x8
 //FONT 1 8 x 16
 // These can be scaled by 0 (x1),1 (x2), 2 (x4)
@@ -224,6 +224,7 @@ const uint8_t diBitQuad [] PROGMEM = {
 	// ----------------------------------------------------------------------------
 #elif FONT == 0
 	#define FONT_WIDTH 6
+	#define FONT_TABLEOFFSET 0
 
 	// ----------------------------------------------------------------------------
 	/* Standard ASCII 6x8 font */
