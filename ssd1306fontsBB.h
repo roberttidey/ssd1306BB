@@ -11,7 +11,7 @@
 //FONT 0 6x8
 //FONT 1 8 x 16
 // These can be scaled by 0 (x1),1 (x2), 2 (x4)
-#define FONT 0
+#define FONT 1
 
 const uint8_t nibbleDouble [] PROGMEM = {
 	0x00,0x03,0x0c,0x0f,0x30,0x33,0x3c,0x3f,
